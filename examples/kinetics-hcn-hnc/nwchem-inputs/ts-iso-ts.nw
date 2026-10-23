@@ -1,0 +1,33 @@
+title "ts-iso-ts ts"
+echo
+start ts-iso-ts
+memory total 1536 mb
+charge 0
+permanent_dir ./perm
+scratch_dir ./perm
+geometry  units angstrom nocenter noautosym noautoz
+  C                  0.05826000    -0.00000000     0.04302000
+  N                 -0.08697000    -0.00000000     1.22574000
+  H                  1.12871000    -0.00000000     0.57124000
+end
+basis spherical
+  * library 6-31g*
+end
+dft
+  xc b3lyp
+  mult 1
+  grid fine
+  maxiter 500
+  convergence energy 1d-8
+end
+driver
+  maxiter 300
+  inhess 2
+  xyz ts-iso-ts
+end
+task dft freq
+task dft saddle
+freq
+  temp 4 250 298.15 350 400
+end
+task dft freq

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  qdm-plot-spectra - IR, Raman, UV-Vis and NMR plots from the CSV tables made
+#                    by the extract scripts (Gaussian, ORCA, NWChem ...)
+#
+#  usage: qdm-plot-spectra -t TYPE -i TABLE.csv [options]
+#    -t ir | raman | uv | nmr
+#    -i CSV      freq.csv (ir, raman), uv.csv (uv) or nmr.csv (nmr)
+#    -n NAMES    comma separated molecules to plot (default: all in the table)
+#    -e FILE     experimental spectrum "x y" to overlay (normalised to the
+#                strongest calculated band); several files: -e a.dat -e b.dat
+#    -w WIDTH    FWHM in cm-1 for ir/raman (default 10), sigma in eV for uv (0.4)
+#    -s SCALE    frequency scale factor (default 1.0; look up the value for your
+#                method and basis in the NIST CCCBDB, e.g. ~0.96-0.97 for B3LYP)
+#    -x MIN:MAX  x range (defaults: 400:4000 cm-1, 200:800 nm, auto for nmr)
+#    -E ELEMENT  nmr: element to plot (default C)
+#    -S          stack the molecules vertically instead of overlaying them
+#    -o FILE     output image, .png or .pdf (default TYPE-spectra.png)
+#  The broadened curves are also saved as OUT-NAME.dat for other plotting tools.
+# =============================================================================
+source "$(dirname "$0")/../lib/common.sh"
+require gnuplot
+type=""; csv=""; names=""; exps=(); width=""; scale=1; xr=""; elem=C; stack=0; out=""
+while getopts "t:i:n:e:w:s:x:E:So:h" o; do
+    case $o in t) type=$OPTARG ;; i) csv=$OPTARG ;; n) names=$OPTARG ;; e) exps+=("$OPTARG") ;;
+               w) width=$OPTARG ;; s) scale=$OPTARG ;; x) xr=$OPTARG ;; E) elem=$OPTARG ;;
+               S) stack=1 ;; o) out=$OPTARG ;; *) sed -n '2,20p' "$0"; exit 0 ;; esac
+done
+[[ "$type" =~ ^(ir|raman|uv|nmr)$ ]] || die "choose -t ir, raman, uv or nmr"
+[[ -f "$csv" ]] || die "table not found: $csv"
+out=${out:-$type-spectra.png}; base=${out%.*}
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+
+# column number of a header name
+col() { head -1 "$csv" | tr ',' '\n' | grep -n -x -m1 "$1" | cut -d: -f1; }
+case $type in
+    ir)    cx=$(col freq_cm1); cy=$(col IR_km_mol);    : "${width:=10}"; : "${xr:=400:4000}"; xl="Wavenumber (cm^{-1})"; yl="IR intensity (km mol^{-1} per cm^{-1})" ;;
+    raman) cx=$(col freq_cm1); cy=$(col Raman_A4_amu); [[ -z "$cy" ]] && cy=$(col Raman_activity); : "${width:=10}"; : "${xr:=100:4000}"; xl="Raman shift (cm^{-1})"; yl="Raman activity (arb. units)" ;;
+    uv)    cx=$(col lambda_nm); cy=$(col f);           : "${width:=0.4}"; : "${xr:=200:800}"; xl="Wavelength (nm)"; yl="{/Symbol e} (L mol^{-1} cm^{-1})" ;;
+    nmr)   cx=$(col shift_ppm); cy=""; ce=$(col element)
+           [[ -z "$cx" ]] && { cx=$(col shielding_iso_ppm); warn "no chemical shifts in $csv, plotting shieldings"; xl="Isotropic shielding (ppm)"; } || xl="{/Symbol d} (ppm)"
+           yl="" ;;
+esac
+[[ -n "$cx" ]] || die "$csv has no column for a $type spectrum"
+[[ -z "$names" ]] && names=$(awk -F, 'NR>1 && !s[$1]++ {print $1}' "$csv" | paste -sd,)
+
+plots=(); i=0; n=$(echo "$names" | tr ',' '\n' | wc -l)
+for nm in ${names//,/ }; do
+    i=$((i + 1))
+    if [[ $type == nmr ]]; then
+        awk -F, -v n="$nm" -v cx="$cx" -v ce="$ce" -v el="$elem" 'NR>1 && $1==n && $ce==el && $cx!="" {c[sprintf("%.2f",$cx)]++} END{for (k in c) print k, c[k]}' "$csv" | sort -g > "$tmp/$nm.dat"
+        [[ -s "$tmp/$nm.dat" ]] || { warn "$nm: no $elem data"; continue; }
+        cp "$tmp/$nm.dat" "$base-$nm.dat"
+        off=$(( stack ? (n - i) : 0 ))
+        plots+=("'$base-$nm.dat' u 1:($off):(0):2 w vectors nohead lw 2 t '$nm'")
+        continue
+    fi
+    awk -F, -v n="$nm" -v cx="$cx" -v cy="$cy" 'NR>1 && $1==n && $cx!="" && $cx>0 {print $cx, $cy}' "$csv" > "$tmp/$nm.stk"
+    [[ -s "$tmp/$nm.stk" ]] || { warn "$nm: no data"; continue; }
+    if [[ $type == uv ]]; then
+        awk -v uv=1 -v width="$width" -v xmin="${xr%:*}" -v xmax="${xr#*:}" -f "$QDM_ROOT/lib/awk/broaden.awk" "$tmp/$nm.stk" > "$base-$nm.dat"
+    else
+        awk -v shape=lorentz -v width="$width" -v scale="$scale" -v xmin="${xr%:*}" -v xmax="${xr#*:}" -f "$QDM_ROOT/lib/awk/broaden.awk" "$tmp/$nm.stk" > "$base-$nm.dat"
+    fi
+    if ((stack)); then
+        max=$(awk 'm<$2{m=$2}END{print (m>0?m:1)}' "$base-$nm.dat")
+        plots+=("'$base-$nm.dat' u 1:(\$2/$max+$((n - i))*1.1) w l lw 2 t '$nm'")
+    else
+        plots+=("'$base-$nm.dat' u 1:2 w l lw 2 t '$nm'")
+    fi
+done
+((${#plots[@]})) || die "nothing to plot"
+# experimental curves scaled to the strongest calculated band
+calcmax=$(cat "$base"-*.dat 2>/dev/null | awk 'm<$2{m=$2}END{print (m>0?m:1)}')
+for e in "${exps[@]}"; do
+    [[ -f "$e" ]] || { warn "experimental file not found: $e"; continue; }
+    emax=$(awk '!/^#/ && NF>=2 && m<$2+0{m=$2+0}END{print (m>0?m:1)}' "$e")
+    f=$calcmax; ((stack)) && f=1
+    plots+=("'$e' u 1:(\$2/$emax*$f) w l lw 2 dt 2 lc rgb 'black' t 'exp. $(basename "${e%.*}")'")
+done
+ext=${out##*.}; term="pngcairo size 1000,700 enhanced font 'Arial,13'"; [[ $ext == pdf ]] && term="pdfcairo size 7in,5in enhanced font 'Arial,11'"
+{
+    echo "set terminal $term"; echo "set output '$out'"
+    echo "set xlabel '$xl'"; echo "set ylabel '$yl'"; echo "set key top right"; echo "set grid lc rgb '#dddddd'"
+    case $type in
+        nmr)      if [[ -n "$xr" ]]; then echo "set xrange [${xr%:*}:${xr#*:}] reverse"; else echo "set xrange [*:*] reverse"; fi ;;
+        ir|raman) echo "set xrange [${xr%:*}:${xr#*:}] reverse" ;;
+        uv)       echo "set xrange [${xr%:*}:${xr#*:}]" ;;
+    esac
+    [[ $type == nmr ]] && { echo "set ylabel 'number of equivalent nuclei'"; echo "set yrange [0:*]"; echo "set offsets graph 0.05, graph 0.05, graph 0.1, 0"; }
+    ((stack)) && echo "unset ytics"
+    printf 'plot %s\n' "$(IFS=,; echo "${plots[*]}")"
+} > "$base.gp"
+gnuplot "$base.gp" && info "$type plot: $out (gnuplot script $base.gp)"

@@ -1,0 +1,8 @@
+Density: NPT with weak restraints
+ &cntrl
+  imin=0, irest=1, ntx=5, nstlim=2500, dt=0.002,
+  ntc=2, ntf=2, cut=10, ntb=2, ntp=1, barostat=2, pres0=1.0,
+  ntpr=500, ntwx=100, ntwr=5000, ioutfm=1, iwrap=1,
+  ntt=3, gamma_ln=2.0, temp0=300, ig=-1,
+  ntr=1, restraint_wt=2.0, restraintmask='!:WAT,Na+,Cl-,K+',
+ /

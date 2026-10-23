@@ -1,0 +1,33 @@
+# local cluster settings, never committed
+config/cluster.local.conf
+
+# test downloads and run output
+tests/data/
+tests/*-results/
+
+# job output of the simulation programs
+*.log
+*.out
+*.chk
+*.fchk
+*.rwf
+*.d2e
+*.int
+*.skr
+*.gbw
+*.cube
+*.cub
+*.wfx
+*.wfn
+*.nc
+*.mdcrd
+*.rst7
+*.restart
+*.trr
+*.xtc
+*.edr
+*.cpt
+*.tpr
+*.dcd
+perm/
+\#*\#

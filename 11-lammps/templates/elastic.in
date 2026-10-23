@@ -1,0 +1,15 @@
+# Young's modulus and stress-strain curve: uniaxial deformation along x at a
+# constant engineering strain rate, lateral pressures held at P (NPT on y, z).
+include         params.in
+include         system.in
+thermo_style    custom step temp press pxx pyy pzz lx
+timestep        ${dt}
+variable        L0 equal lx
+variable        L0f equal ${L0}
+fix             def all deform 1 x erate ${erate} units box remap x
+fix             npt all npt temp ${T} ${T} ${tdamp} y ${P} ${P} ${pdamp} z ${P} ${P} ${pdamp}
+variable        strain equal (lx-${L0f})/${L0f}
+variable        stress equal -pxx*${pconv}
+fix             out all ave/time 10 10 100 v_strain v_stress file stress-strain.dat
+thermo          ${thermo}
+run             ${nsteps}

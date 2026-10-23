@@ -1,0 +1,2 @@
+reaction,reactants,TS,products,T_K,dE#_kcal,dH#_kcal,dG#_kcal,dE_r_kcal,dH_r_kcal,nu_imag_cm1,dG_r_kcal,dE#_kJ,dH#_kJ,dG#_kJ,dG_r_kJ
+isomerisation,hcn,ts-iso,hnc,298.15,50.13,46.65,45.44,16.59,16.27,-1147.4,15.97,209.76,195.19,190.13,66.82

@@ -1,0 +1,5 @@
+ligand,n_programs,AASS,rank_AASS,Zscore,rank_Z,RbR,rank_RbR,ECR,rank_ECR,vina,glide,haddock,plp
+nilotinib,4,0.0000,1,-0.8522,1,1.00,1,0.36193,1,-14.174,-12.1,-101.5,81.6
+imatinib-xtal,4,0.1121,2,-0.5650,2,2.00,2,0.32749,2,-13.218,-11.4,-98.2,78.1
+imatinib-smiles,4,0.2270,3,-0.2698,3,3.00,3,0.29633,3,-12.040,-10.9,-95.0,74.3
+benzophenone-1H,4,1.0000,4,1.6870,4,4.00,4,0.26813,4,-8.604,-6.2,-55.3,41.2

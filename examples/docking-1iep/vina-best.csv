@@ -1,0 +1,5 @@
+ligand,best_affinity_kcal_mol,rmsd_to_reference_A
+nilotinib,-14.174,"not the reference compound"
+imatinib-xtal,-13.218,"0.401762"
+imatinib-smiles,-12.040,"0.903646"
+benzophenone-1H,-8.604,"not the reference compound"

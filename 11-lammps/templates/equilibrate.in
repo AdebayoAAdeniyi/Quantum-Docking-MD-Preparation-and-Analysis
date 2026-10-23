@@ -1,0 +1,20 @@
+# Equilibration: minimisation, NVT heating, NPT density relaxation
+# params.in (written by lammps-inputs.sh) holds T, P, dt, tdamp, pdamp, run lengths;
+# system.in holds units, styles, "read_data ${data}" and the force field coefficients
+include         params.in
+include         system.in
+thermo_style    custom step temp press density pe ke etotal vol
+thermo          ${thermo}
+minimize        1.0e-6 1.0e-8 5000 50000
+reset_timestep  0
+timestep        ${dt}
+velocity        all create ${T} 4928459 mom yes rot yes dist gaussian
+fix             nvt all nvt temp ${T} ${T} ${tdamp}
+run             ${nheat}
+unfix           nvt
+fix             npt all npt temp ${T} ${T} ${tdamp} iso ${P} ${P} ${pdamp}
+variable        dens equal density
+fix             dens all ave/time 10 100 1000 v_dens file equilibrate-density.dat
+run             ${nsteps}
+write_data      equilibrated.data nocoeff
+write_restart   equilibrated.restart

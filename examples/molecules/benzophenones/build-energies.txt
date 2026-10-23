@@ -1,0 +1,5 @@
+1-H            MMFF94   71.06851 kcal/mol
+2-OMe          MMFF94   68.39437 kcal/mol
+3-Oct          MMFF94   64.77464 kcal/mol
+4-Cl           MMFF94   60.93264 kcal/mol
+5-Br           MMFF94   63.29840 kcal/mol

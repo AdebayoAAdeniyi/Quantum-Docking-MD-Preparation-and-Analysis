@@ -1,0 +1,5 @@
+Minimisation 1: solvent and ions, solute restrained
+ &cntrl
+  imin=1, maxcyc=500, ncyc=250, ntb=1, cut=10, ntpr=500,
+  ntr=1, restraint_wt=10.0, restraintmask='!:WAT,Na+,Cl-,K+',
+ /

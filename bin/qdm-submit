@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# qdm-submit - submit (or run locally) the run.sh of every job directory
+#
+#   qdm-submit DIR [DIR ...]          submit the listed directories
+#   qdm-submit -l list -p prefix/     submit prefix/NAME for every NAME in list
+#   qdm-submit -s other.sh DIR        submit a differently named script
+#
+# The scheduler is chosen in config/cluster.conf (local, pbs or slurm).
+source "$(dirname "$0")/../lib/common.sh"
+source "$QDM_ROOT/lib/jobscript.sh"
+script=run.sh; list=""; prefix=""
+while getopts "l:p:s:h" o; do
+    case $o in l) list=$OPTARG ;; p) prefix=$OPTARG ;; s) script=$OPTARG ;;
+               *) sed -n '2,10p' "$0"; exit 0 ;; esac
+done
+shift $((OPTIND-1))
+dirs=("$@")
+[[ -n "$list" ]] && while read -r n; do dirs+=("$prefix$n"); done < <(read_list "$list")
+((${#dirs[@]})) || die "no job directories given"
+for d in "${dirs[@]}"; do
+    [[ -f "$d/$script" ]] || { warn "no $script in $d, skipped"; continue; }
+    info "submitting $d"
+    submit_job "$d" "$script"
+done

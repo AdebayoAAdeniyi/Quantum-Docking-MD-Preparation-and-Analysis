@@ -1,0 +1,23 @@
+# Glass transition temperature: stepwise NPT cooling from Thigh to Tlow,
+# recording the density (and specific volume) at every temperature.
+# Tg is then the intersection of the straight lines fitted to the glassy and
+# rubbery branches (analysis/lammps-tg.sh).
+include         params.in
+include         system.in
+thermo_style    custom step temp press density vol pe
+thermo          ${thermo}
+timestep        ${dt}
+variable        dens equal density
+variable        tt equal temp
+variable        i loop ${nT}
+label           cool
+  variable      Tnow equal ${Thigh}-(${i}-1)*(${Thigh}-${Tlow})/(${nT}-1)
+  fix           npt all npt temp ${Tnow} ${Tnow} ${tdamp} iso ${P} ${P} ${pdamp}
+  run           ${nequil}
+  fix           avg all ave/time 10 100 ${nprod} v_tt v_dens
+  run           ${nprod}
+  print         "$(v_Tnow) $(f_avg[1]) $(f_avg[2])" append tg-density.dat screen no
+  unfix         avg
+  unfix         npt
+next            i
+jump            SELF cool

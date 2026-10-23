@@ -1,0 +1,20 @@
+source leaprc.protein.ff14SB
+source leaprc.gaff2
+source leaprc.water.tip3p
+set default PBRadii mbondi2
+loadAmberParams /tmp/claude-0/abuild/lig-bcc/STI/LIG.frcmod
+L1 = loadMol2 /tmp/claude-0/abuild/lig-bcc/STI/LIG.mol2
+check L1
+LIG = L1
+COM = copy LIG
+saveAmberParm LIG ligand.prmtop ligand.inpcrd
+saveAmberParm COM complex.prmtop complex.inpcrd
+savePdb COM complex-dry.pdb
+charge COM
+solvateOct COM TIP3PBOX 10
+addIons2 COM Na+ 0
+addIons2 COM Cl- 0
+addIonsRand COM Na+ 5 Cl- 5
+saveAmberParm COM solv.prmtop solv.inpcrd
+savePdb COM solv.pdb
+quit

@@ -1,0 +1,21 @@
+# Shear viscosity by Green-Kubo: integral of the off-diagonal pressure
+# autocorrelation, eta = V/(kB T) * integral <Pxy(0)Pxy(t)> dt (average of xy, xz, yz).
+# ${gkconv} converts (pressure^2 * volume * time / energy) to the wanted unit.
+include         params.in
+include         system.in
+timestep        ${dt}
+fix             nvt all nvt temp ${T} ${T} ${tdamp}
+variable        pxy equal pxy
+variable        pxz equal pxz
+variable        pyz equal pyz
+fix             SS all ave/correlate ${s} ${p} ${d} v_pxy v_pxz v_pyz type auto file viscosity-acf.dat ave running
+variable        scale equal ${gkconv}*vol/(${kB}*${T})*${s}*dt
+variable        v11 equal trap(f_SS[3])*${scale}
+variable        v22 equal trap(f_SS[4])*${scale}
+variable        v33 equal trap(f_SS[5])*${scale}
+variable        eta equal (v_v11+v_v22+v_v33)/3.0
+thermo_style    custom step temp press v_eta
+thermo          ${d}
+fix             etaout all ave/time ${d} 1 ${d} v_eta file viscosity-running.dat
+run             ${nsteps}
+print           "viscosity ${eta}"

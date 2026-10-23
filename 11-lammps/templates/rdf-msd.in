@@ -1,0 +1,12 @@
+# Structure and dynamics: radial distribution function and mean squared
+# displacement (diffusion coefficient D = slope / 6).
+include         params.in
+include         system.in
+timestep        ${dt}
+fix             nvt all nvt temp ${T} ${T} ${tdamp}
+compute         rdf all rdf 100
+fix             rdf all ave/time 100 10 1000 c_rdf[*] file rdf.dat mode vector
+compute         msd all msd com yes
+fix             msd all ave/time 100 1 100 c_msd[4] file msd.dat
+thermo          ${thermo}
+run             ${nsteps}
