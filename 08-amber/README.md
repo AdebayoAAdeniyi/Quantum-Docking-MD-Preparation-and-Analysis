@@ -27,6 +27,9 @@ bin/qdm-submit -s run-md.sh amber-systems/complex
 08-amber/analysis/amber-mmpbsa.sh   -d amber-systems/complex -f 1:last:10
 ```
 
+
+The complete sequence, a docked pose through the full MD protocol to MM-GBSA, is in [`../docs/running.md`](../docs/running.md#c-protein-ligand-md-in-amber). Every script also prints its own usage block with `-h`.
+
 ## What the build does
 
 * `pdb4amber` cleans the receptor (hydrogens removed and rebuilt by tleap, waters dropped unless `-X`, disulfides and chain breaks reported).
@@ -62,7 +65,8 @@ Langevin thermostat (γ = 2 ps⁻¹), SHAKE on bonds to hydrogen, 2 fs steps, PM
 * **Restarts.** The old job scripts ran every stage unconditionally, so a resubmission started again from minimisation.
 * **Analysis.** Eight or more separate ptraj scripts became one cpptraj pass over the trajectory.
 * **aMD parameters** were computed by hand with a chain of grep and awk commands recorded in comments; `amber-amd-inputs.sh` reads the cMD output and applies the published rules itself.
-* **PyReweighting** (Miao et al.) for aMD reweighting is cited, not redistributed.
+* **PyReweighting** (Miao et al.) for aMD reweighting is cited, not redistributed. [`../docs/third-party-material.md`](../docs/third-party-material.md#pyreweighting) says where to get it and how it joins this workflow, and [`../docs/running.md`](../docs/running.md#f-accelerated-md-and-reweighting) gives the full aMD sequence.
+* The secondary structure output is named `dssp.dat` and `dssp-summary.dat`, but it comes from `cpptraj`'s built-in `secstruct` command. No external DSSP program is needed.
 
 ## Tested
 

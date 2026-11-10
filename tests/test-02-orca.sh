@@ -41,8 +41,12 @@ check "Hirshfeld C1 (radical)"  "$(s charges orca6.0/dvb_sp_un_dft.out | head -1
 check "largest SOCME T9-S9"     "$(s socme orca5.0/dvb_soc.log | sort -t, -k4 -gr | head -1 | cut -d, -f4)" 12.18
 check "SOC corrected state 1"   "$(s socuv orca5.0/dvb_soc.log | head -1 | cut -d, -f4)" 462.1
 check "NEVPT2 S1 (eV)"          "$(s casscf orca4.2/casscf.out 2>/dev/null | awk -F, '$4==1{print $6}')" 3.505
-check "NEB CI marked"           "$(awk -v mode=neb -f "$AWKO" "$TESTS_DIR/fixtures/orca-neb-fragment.out" | awk -F, '$6=="CI"{print $2}')" 6
-check "fluorescence rate"       "$(awk -v mode=esd -f "$AWKO" "$TESTS_DIR/fixtures/orca-esd-fragment.out" | cut -d, -f3)" 1.688355e+06
+if NEB=$(fixture orca-neb-fragment.out); then
+    check "NEB CI marked"       "$(awk -v mode=neb -f "$AWKO" "$NEB" | awk -F, '$6=="CI"{print $2}')" 6
+fi
+if ESD=$(fixture orca-esd-fragment.out); then
+    check "fluorescence rate"   "$(awk -v mode=esd -f "$AWKO" "$ESD" | cut -d, -f3)" 1.688355e+06
+fi
 
 echo "== batch extraction and ESD set-up"
 mkdir -p jobs/dvb jobs/em
@@ -59,8 +63,10 @@ dele=$(awk 'BEGIN{printf "%.1f", (-381.831980903245 - -382.055107107616) * 21947
 check "DELE in cm-1"            "$(grep -m1 DELE jobs/em/em-phosp.inp | awk '{print $2}')" "$dele"
 check "three T1 sublevels"      "$(grep -c 'IRoot' jobs/em/em-phosp.inp)" 3
 need gnuplot
-mkdir -p jobs/rx; cp "$TESTS_DIR/fixtures/orca-neb-fragment.out" jobs/rx/rx-neb.out
+if NEB=$(fixture orca-neb-fragment.out); then
+mkdir -p jobs/rx; cp "$NEB" jobs/rx/rx-neb.out
 "$O/extract/orca-extract.sh" -k neb -p jobs -o res 2>/dev/null
 "$O/plot/plot-neb.sh" -i res/neb.csv -o res/neb.png 2>/dev/null
 check "NEB plot"                "$([[ -s res/neb.png ]] && echo yes)" yes
+fi
 finish

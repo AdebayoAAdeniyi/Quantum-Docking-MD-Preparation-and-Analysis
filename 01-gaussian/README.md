@@ -45,6 +45,9 @@ bin/qdm-plot-spectra -t uv -i gaussian-results/uv.csv
 bin/qdm-plot-spectra -t nmr -i gaussian-results/nmr.csv -E C
 ```
 
+
+The complete sequence, a series of molecules through DFT to a statistics table, is in [`../docs/running.md`](../docs/running.md#a-quantum-chemistry-on-a-series-of-molecules). Every script also prints its own usage block with `-h`.
+
 ## What each step means
 
 | step | route keywords | gives |

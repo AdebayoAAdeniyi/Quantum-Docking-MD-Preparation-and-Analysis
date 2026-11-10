@@ -26,6 +26,9 @@ Enhanced sampling on top of the MD engines of modules 08, 09 and 10. The main us
 
 The funnel is built from standard PLUMED actions (`PROJECTION_ON_AXIS`, `CUSTOM`, `UPPER_WALLS`), so the optional funnel module does not have to be compiled into PLUMED. The method is Limongelli, Bonomi and Parrinello, *PNAS* **2013**, 110, 6358.
 
+
+The complete sequence, funnel metadynamics from an equilibrated system to an absolute binding free energy, including what to watch while it runs, is in [`../docs/running.md`](../docs/running.md#e-funnel-metadynamics-absolute-binding-free-energy). Every script also prints its own usage block with `-h`.
+
 ## Binding free energy
 
 With `-u SITE_MAX:UNBOUND_MIN`, `plumed-fes.sh` computes
@@ -52,5 +55,5 @@ The funnel input generator is tested on a real protein-ligand PDB (atom selectio
 ## Corrections made to the original scripts
 
 * The funnel parameters were set in a TCL script and a set of shell scripts specific to one system, and depended on the optional `funnel` module being compiled in. The restraint is now generated from standard actions for any system from residue selections.
-* The third-party funnel visualisation and analysis scripts that sat in the original folder are not redistributed; they belong to the PLUMED tutorial by the Limongelli group.
+* The third-party funnel visualisation and analysis scripts that sat in the original folder are not redistributed. The reference input for PLUMED's funnel module is on PLUMED-NEST at [eggs/19/039](https://www.plumed-nest.org/eggs/19/039/); see [`../docs/third-party-material.md`](../docs/third-party-material.md#funnel-metadynamics-tutorial-files).
 * `plumed sum_hills` was run with a fixed temperature factor; kT is now a parameter, and the convergence series is produced in the same call.

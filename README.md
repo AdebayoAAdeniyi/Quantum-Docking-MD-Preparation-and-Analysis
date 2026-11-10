@@ -29,7 +29,18 @@ The original scripts did their job but were personal: cluster paths and molecule
 | 13 | [docking](13-docking) | AutoDock Vina, HADDOCK, Glide, MOE | preparation, docking, redocking validation, interaction restraints, consensus ranking |
 | 14 | [statistics](14-statistics) | R (FactoMineR, bio3d) | correlations, PCA and regression of molecular properties; trajectory PCA and cross-correlation |
 
-Shared parts: [`lib/`](lib) (common shell functions and the awk output parsers), [`bin/`](bin) (`qdm-submit`, `qdm-plot-spectra`), [`config/cluster.conf`](config/cluster.conf), [`docs/troubleshooting.md`](docs/troubleshooting.md), [`install/README.md`](install/README.md), [`examples/`](examples) and [`tests/`](tests).
+Shared parts: [`lib/`](lib) (common shell functions and the awk output parsers), [`bin/`](bin) (`qdm-submit`, `qdm-plot-spectra`), [`config/cluster.conf`](config/cluster.conf), [`examples/`](examples) and [`tests/`](tests).
+
+Documentation:
+
+| document | what it covers |
+|---|---|
+| [`install/README.md`](install/README.md) | how to obtain and configure every program, free and licensed, and what you need for which module |
+| [`docs/running.md`](docs/running.md) | the complete command sequences, end to end, with what to check between stages |
+| [`docs/third-party-material.md`](docs/third-party-material.md) | the code and force field files that are not in this repository, and where each comes from |
+| [`docs/troubleshooting.md`](docs/troubleshooting.md) | the failures that came up most often and what each one means |
+
+Every script also prints its own usage block when run with `-h` or with no arguments.
 
 ## How it works
 
@@ -83,11 +94,15 @@ Programs that are free were **run here**, on real molecules, and the results are
 | **PLUMED** | well-tempered metadynamics on a double well whose barrier is exactly 5: recovered 5.27 |
 | **R** | PCA and regression on the xTB property table |
 
-Programs that are licensed (Gaussian, ORCA, GAMESS, Firefly, Multiwfn, AIMAll, Glide, MOE) could not be run here, so their **parsers are tested against public reference outputs** from the [cclib](https://github.com/cclib/cclib) project: Gaussian 03/09/16, ORCA 4.2/5.0/6.0, GAMESS-US 2017 and Firefly 8. Where no public output exists (ORCA NEB and ESD, NBO's NEDA table, AIMAll critical points), the parsers are tested on short fragments that copy the layout printed in the program manuals, and `tests/fixtures/README.md` says exactly which is which.
+Programs that are licensed (Gaussian, ORCA, GAMESS, Firefly, Multiwfn, AIMAll, Glide, MOE) could not be run here, so their **parsers are tested against public reference outputs** from the [cclib](https://github.com/cclib/cclib) project: Gaussian 03/09/16, ORCA 4.2/5.0/6.0, GAMESS-US 2017 and Firefly 8. Where no public output exists (ORCA NEB and ESD, NBO's NEDA table, AIMAll critical points), the parsers are tested on short fragments that copy the layout printed in the program manuals, and [`tests/fixtures/README.md`](tests/fixtures/README.md) says exactly which is which.
 
 ```bash
 tests/run-all-tests.sh          # every module, skipping what is not installed
+tests/run-all-tests.sh 08 12    # only these modules
+tests/run-all-tests.sh -s       # include the slow QM and MD runs
 ```
+
+A test that needs a program you have not installed reports `skipped` and does not fail the run, so a partial installation still gives a useful report. Three ORCA and NBO fixtures are currently absent from the repository, excluded at commit time by a `*.out` rule in `.gitignore`; the tests that need them now say so and skip, and [`tests/fixtures/README.md`](tests/fixtures/README.md) explains how to restore them.
 
 ## Errors found in the original scripts
 
@@ -109,7 +124,11 @@ Each module README lists its own corrections with the reasoning.
 
 ## Privacy and third-party material
 
-Cluster accounts, project codes, personal paths, email addresses and an NBO licence key that appeared in the original scripts have been removed. Third-party code that used to sit beside the scripts (R and DSSP tarballs, MGLTools, PyReweighting, the CHARMM36 force field directory, Rosetta demo files, VMD scripts by Tian Lu, funnel metadynamics tutorial scripts) is **not** redistributed; the READMEs cite it and `install/README.md` says where to get it.
+Cluster accounts, project codes, personal paths, email addresses and an NBO licence key that appeared in the original scripts have been removed. The NBO key now belongs in `config/cluster.local.conf`, which is gitignored.
+
+Third-party code that used to sit beside the scripts is **not** redistributed, because it is not mine to redistribute. [`docs/third-party-material.md`](docs/third-party-material.md) covers each item: what it was for, which script touches it, where to download it and what to do with it once you have it. That list is MGLTools, PyReweighting, the CHARMM36 force field directory for GROMACS, Tian Lu's VMD scripts, the funnel metadynamics tutorial files, DSSP and the R tarballs.
+
+One honest gap in the same document: Rosetta demo files were in my original material, but **no script here uses Rosetta**, so this repository currently under-represents that part of the work rather than merely declining to ship someone else's files. Adding it needs the original protocol scripts.
 
 ## About me
 

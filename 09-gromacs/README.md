@@ -28,6 +28,9 @@ bin/qdm-submit -s run-md.sh gromacs-systems/complex
 
 `gmx-build.sh` writes `index.ndx` with the groups the rest of the workflow expects: `LIG`, `Protein_LIG` and `Water_and_ions`, so the temperature coupling groups and every analysis selection are consistent.
 
+
+The complete sequence, the same system converted from Amber and run in GROMACS, is in [`../docs/running.md`](../docs/running.md#g-the-same-system-in-gromacs). Every script also prints its own usage block with `-h`.
+
 ## The force field decision, and why it differs from the original scripts
 
 The original topology scripts built the protein with **CHARMM36** and the ligand with **GAFF2** through tleap and ParmEd, and then edited the ligand's 1-4 electrostatic scaling from 1.2 to 1.0 so that the two topologies could be combined.
@@ -49,7 +52,7 @@ Energy terms are selected **by name**, not by the menu number that changes with 
 * **Berendsen pressure coupling** was removed in favour of C-rescale, as GROMACS 2021+ recommends; Berendsen does not sample the NPT ensemble.
 * **Position restraints.** Systems converted from Amber have no `POSRES` sections, so the restraint stages in the old workflow silently did nothing. The generator now writes a `posre-*.itp` for every solute molecule type and includes it under `#ifdef POSRES`.
 * **Restartability**: each stage is skipped if its `.gro` already exists, and `mdrun -cpi` continues an interrupted stage.
-* The bundled `charmm36-mar2019.ff` directory is not redistributed; it comes from the MacKerell lab.
+* The bundled `charmm36-mar2019.ff` directory is not redistributed. It comes from the MacKerell lab GROMACS ports at [mackerell.umaryland.edu/charmm_ff.shtml](https://mackerell.umaryland.edu/charmm_ff.shtml), where that exact file is still listed among the older packages. [`../docs/third-party-material.md`](../docs/third-party-material.md#charmm36-force-field-for-gromacs) covers how to unpack and use it, and what to do if you need CHARMM for a protein with a ligand.
 
 ## Tested
 

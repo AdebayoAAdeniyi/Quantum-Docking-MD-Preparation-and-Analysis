@@ -23,6 +23,9 @@ bin/qdm-submit -s run-cp2k-mm.sh amber-systems/complex
 
 The QM region is given either as a residue name (`-q LIG`) or as atom indices (`-q "1-25,40"`). The script finds the atoms in the prmtop itself.
 
+
+The complete sequence, classical then QM/MM MD from an Amber system, is in [`../docs/running.md`](../docs/running.md#h-qmmm-molecular-dynamics-with-cp2k). Every script also prints its own usage block with `-h`.
+
 ## Things this script handles that cost real debugging time
 
 * **"Unknown element for KIND"**. CP2K builds its atomic kinds from the Amber atom names and force field types, and neither is an element symbol: GAFF2 writes types such as `nu`, `hx` and `ca`, and atom names such as `C12`. The script writes an explicit `&KIND` with `ELEMENT` for every distinct name **and** type in the topology. This was the first error hit when running the original CP2K input on a current system.

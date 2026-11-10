@@ -42,7 +42,7 @@ At each bond critical point the extractor adds the total energy density H = G + 
 * The HOMO index is read from Multiwfn's own start-up screen for every molecule, as before, but the two message formats (closed and open shell) are handled in one place.
 * The Fukui cubes now read the `NAME-fukui-N/Nplus1/Nminus1.fchk` files that `gaussian-input.sh -F` produces, so the chain from input to density difference runs without renaming files.
 * The BCP extraction used `split -l 8` on grep output, which breaks when AIMAll prints a different number of lines per critical point; the new parser reads each critical point block by its keys.
-* Tian Lu's VMD scripts (`orbitalshow.vmd`) and the large saved VMD states are not redistributed; the Multiwfn manual provides them.
+* Tian Lu's VMD scripts (`orbitalshow.vmd`) and the large saved VMD states are not redistributed; they ship with the Multiwfn manual and example package from [sobereva.com/multiwfn](http://sobereva.com/multiwfn). See [`../docs/third-party-material.md`](../docs/third-party-material.md#tian-lus-vmd-scripts) for how the cube and the rendering step fit together.
 
 ## Tested
 

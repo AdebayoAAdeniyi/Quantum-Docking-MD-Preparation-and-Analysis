@@ -34,10 +34,14 @@ check "SCF failure flagged"  "$(s summary basicGAMESS-US2017/dvb_un_sp.out | cut
 check "TS: one imaginary"    "$(s summary basicGAMESS-US2017/nh3_ts_ir.out | cut -d, -f16)" 1
 check "TS mode"              "$(s freq basicGAMESS-US2017/nh3_ts_ir.out | head -1 | cut -d, -f3)" -825.18
 check "dianion charge"       "$(s summary basicGAMESS-US2017/MoOCl4-sp.out | cut -d, -f5)" -2
-check "NEDA total (NBO tutorial)" "$(awk -v mode=neda -f "$AWKM" "$TESTS_DIR/fixtures/nbo-neda-fragment.out" | awk -F, '$2=="Total_interaction"{print $3}')" -6.22
-check "NEDA EL"              "$(awk -v mode=neda -f "$AWKM" "$TESTS_DIR/fixtures/nbo-neda-fragment.out" | awk -F, '$2 ~ /^EL/{print $3}')" -14.25
+if NEDA=$(fixture nbo-neda-fragment.out); then
+    check "NEDA total (NBO tutorial)" "$(awk -v mode=neda -f "$AWKM" "$NEDA" | awk -F, '$2=="Total_interaction"{print $3}')" -6.22
+    check "NEDA EL"          "$(awk -v mode=neda -f "$AWKM" "$NEDA" | awk -F, '$2 ~ /^EL/{print $3}')" -14.25
+fi
 echo "== batch"
-mkdir -p jobs/wd; cp "$TESTS_DIR/fixtures/nbo-neda-fragment.out" jobs/wd/wd-neda.log
+if NEDA=$(fixture nbo-neda-fragment.out); then
+mkdir -p jobs/wd; cp "$NEDA" jobs/wd/wd-neda.log
 "$M/extract/gamess-extract.sh" -k neda -p jobs -o res 2>/dev/null
 check "wide NEDA table"      "$(awk -F, 'NR==2{print NF}' res/neda-wide.csv)" 14
+fi
 finish

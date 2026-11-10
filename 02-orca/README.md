@@ -41,6 +41,9 @@ bin/qdm-submit -s run-esd.sh -l list -p orca-jobs/
 02-orca/extract/orca-extract.sh -k neb -l reactions && 02-orca/plot/plot-neb.sh
 ```
 
+
+The complete sequence, a series of molecules through DFT to a statistics table, is in [`../docs/running.md`](../docs/running.md#a-quantum-chemistry-on-a-series-of-molecules). Every script also prints its own usage block with `-h`.
+
 ## Design notes
 
 * **One input per step** (`NAME-opt.inp`, `NAME-td.inp` ...). Later steps start from `NAME-opt.xyz` and read `NAME-opt.gbw` with `MORead`, so they are quick, and every output can be parsed on its own without splitting.

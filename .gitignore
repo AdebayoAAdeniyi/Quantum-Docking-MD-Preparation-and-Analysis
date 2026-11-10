@@ -31,3 +31,12 @@ tests/*-results/
 *.dcd
 perm/
 \#*\#
+
+# Test fixtures are small fragments of real program output, so they collide
+# with the output rules above. Git applies the LAST matching pattern, so this
+# exception must stay BELOW them: placed above, *.out wins and the fixtures are
+# silently dropped, which is how three of them were kept out of an earlier
+# commit and made the ORCA and GAMESS tests fail on a fresh clone.
+# Verify with: git check-ignore -v tests/fixtures/orca-neb-fragment.out
+# (it should report this negation, or nothing at all)
+!tests/fixtures/**

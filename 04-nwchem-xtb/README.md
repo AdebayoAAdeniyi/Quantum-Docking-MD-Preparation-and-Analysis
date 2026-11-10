@@ -30,6 +30,9 @@ bin/qdm-submit -s run-opt.sh -l selected -p nwchem-jobs/
 04-nwchem-xtb/extract/nwchem-extract.sh -k all
 ```
 
+
+The complete sequence, screening a series with xTB and taking the survivors to DFT, is in [`../docs/running.md`](../docs/running.md#a-quantum-chemistry-on-a-series-of-molecules). Every script also prints its own usage block with `-h`.
+
 ## Results produced while building this module
 
 **xTB, five 2-hydroxybenzophenones** (UV absorber scaffolds built from SMILES in `examples/`, GFN2-xTB with ALPB water, `examples/xtb-benzophenones/`):

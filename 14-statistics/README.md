@@ -33,8 +33,11 @@ Fits the frames, then writes per-residue RMSF, the principal components of the C
 
 * The old R scripts had the file names, column numbers and plot ranges typed into them, so each new data set meant editing the script. Everything is now a command line option and columns are chosen by name.
 * The PCA, correlation and regression steps were separate scripts that each re-read and re-cleaned the data; they are one pass now, and constant columns (which make the correlation matrix undefined) are dropped with a message.
-* bio3d, DSSP and the R tarballs that were kept beside the original scripts are not redistributed; they install from CRAN and conda-forge (see `install/README.md`).
+* The R and bio3d source tarballs kept beside the original scripts are not redistributed; install them from CRAN or conda-forge (see [`../install/README.md`](../install/README.md)).
+* A DSSP tarball was in the same folder, but nothing here needs it: `bio3d-analysis.R` does PCA, RMSF and cross-correlation and never calls `bio3d::dssp()`. See [`../docs/third-party-material.md`](../docs/third-party-material.md#dssp).
 
 ## Tested
 
 `tests/test-14-statistics.sh` runs both scripts: the property statistics on the real xTB screening table of module 04 (with a synthetic response column, so the regression path is exercised), and bio3d on a short trajectory. Both need R with `FactoMineR` and `bio3d`.
+
+The complete sequence, where these statistics sit in a property workflow, is in [`../docs/running.md`](../docs/running.md#a-quantum-chemistry-on-a-series-of-molecules). Every script also prints its own usage block with `-h`.

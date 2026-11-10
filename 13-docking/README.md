@@ -25,6 +25,9 @@ Preparation, docking, pose extraction and redocking validation with AutoDock Vin
 
 The box can be defined three ways: from a reference ligand (`-x`, its extent plus padding), from an explicit centre (`-c "x y z" -s "22 22 22"`), or from the midpoint of named atoms (`-a "A:315:CA,A:381:CA"`), which is how pockets defined by two residues were set up in the original work.
 
+
+The complete sequence, docking with redocking validation and consensus ranking, is in [`../docs/running.md`](../docs/running.md#b-docking-with-validation). Every script also prints its own usage block with `-h`.
+
 ## Redocking validation, run here
 
 PDB **1IEP** (Abl kinase with imatinib), receptor and crystal ligand from the AutoDock Vina example set, box from the crystal ligand + 6 Å, exhaustiveness 8:
@@ -44,7 +47,7 @@ When the same ligands are docked with several programs, no single score is relia
 
 ## Corrections made to the original scripts
 
-* **MGLTools** (`prepare_ligand4.py`, Python 2) was replaced by **Meeko**, which is the current preparation route for Vina 1.2 and is maintained.
+* **MGLTools** (`prepare_ligand4.py`) was replaced by **Meeko**. The Vina documentation describes two preparation routes, Meeko and the ADFR suite; Meeko is the one that installs with pip or conda, which is why it is used here. MGLTools ships its own Python interpreter and is awkward to place beside a modern environment. If you want it anyway, see [`../docs/third-party-material.md`](../docs/third-party-material.md#mgltools-and-autodocktools).
 * **Metal charges** were patched with `sed` on the PDBQT after preparation. That silently depended on the atom order; metal handling now belongs to the receptor preparation step, and the script says so rather than editing files blindly.
 * **Missing scores.** The consensus script handled `NIL` entries with a chain of `grep -v NIL` branches that produced different column counts for different ligands. The new one keeps the row and averages over the programs that have a score.
 * **Score direction.** The old script assumed every score was better when lower, which silently inverted the ranking of MolDock/PLP style fitness values. The direction is now declared per program.

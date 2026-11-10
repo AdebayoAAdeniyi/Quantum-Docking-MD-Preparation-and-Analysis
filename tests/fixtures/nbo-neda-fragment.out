@@ -1,0 +1,21 @@
+ Natural Energy Decomposition Analysis (Summary):
+
+                                                           Component
+                   Energy(wfn)        Energy(wfn)          (kcal/mol)
+------------------------------------------------------------------------------
+H4O2           -151.8276807(scf)  -151.8065596(loc)      CT =   -13.25
+                                                         ES =   -12.24
+                                                        POL =    -3.89
+                                                         EX =    -1.62
+1. H2O          -75.8820039(def)   -75.9094128(cp)  DEF(SE) =    17.20(   0.10)
+2. H2O          -75.8962674(def)   -75.9083574(cp)  DEF(SE) =     7.59(   1.78)
+                                                             ---------
+                                                          E =    -6.22
+
+Electrical (ES+POL+SE) :     -14.25
+  Charge Transfer (CT) :     -13.25
+      Core (EX+DEF-SE) :      21.29
+                       ------------
+ Total Interaction (E) :      -6.22
+
+......END OF NBO ANALYSIS......
