@@ -28,6 +28,7 @@ The original scripts did their job but were personal: cluster paths and molecule
 | 12 | [plumed-metadynamics](12-plumed-metadynamics) | PLUMED | well-tempered and funnel metadynamics, free energy profiles, binding free energies |
 | 13 | [docking](13-docking) | AutoDock Vina, HADDOCK, Glide, MOE | preparation, docking, redocking validation, interaction restraints, consensus ranking |
 | 14 | [statistics](14-statistics) | R (FactoMineR, bio3d) | correlations, PCA and regression of molecular properties; trajectory PCA and cross-correlation |
+| 15 | [Protein structure modelling with Rosetta](15-rosetta-modelling/) | comparative modelling from several templates, symmetric and local docking, relax under experimental distance restraints |
 
 Shared parts: [`lib/`](lib) (common shell functions and the awk output parsers), [`bin/`](bin) (`qdm-submit`, `qdm-plot-spectra`), [`config/cluster.conf`](config/cluster.conf), [`examples/`](examples) and [`tests/`](tests).
 

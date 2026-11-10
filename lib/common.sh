@@ -198,3 +198,31 @@ csv_join() { local IFS=,; echo "$*"; }
 
 # last_match PATTERN FILE: print the last line that matches
 last_match() { grep -E "$1" "$2" | tail -n 1; }
+
+# ----------------------------------------------------------------------------
+# Rosetta
+#   rosetta_exe APP [mpi]  -> full command for a Rosetta application
+#
+# Rosetta binaries are named APP.BUILD.OSCOMPILERMODE, for example
+# relax.default.linuxgccrelease. The build part varies between installations,
+# so it comes from config/cluster.conf rather than being written into scripts.
+# ----------------------------------------------------------------------------
+rosetta_exe() {
+    local app="$1" kind="${2:-serial}" suffix exe
+    if [[ "$kind" == mpi ]]; then suffix="${ROSETTA_MPI_SUFFIX:-mpi.linuxgccrelease}"
+    else suffix="${ROSETTA_SUFFIX:-default.linuxgccrelease}"; fi
+    for exe in "${ROSETTA_BIN:+$ROSETTA_BIN/}$app.$suffix" "$app.$suffix" "$app"; do
+        command -v "$exe" >/dev/null 2>&1 && { echo "$exe"; return 0; }
+        [[ -x "$exe" ]] && { echo "$exe"; return 0; }
+    done
+    return 1
+}
+
+# require_rosetta APP ... : stop with a message naming the missing application
+require_rosetta() {
+    local app missing=()
+    for app in "$@"; do rosetta_exe "$app" >/dev/null || missing+=("$app"); done
+    ((${#missing[@]} == 0)) || die "Rosetta application(s) not found: ${missing[*]}
+Set ROSETTA_BIN and ROSETTA_SUFFIX in config/cluster.local.conf.
+Rosetta is free for non-commercial users; see docs/third-party-material.md."
+}

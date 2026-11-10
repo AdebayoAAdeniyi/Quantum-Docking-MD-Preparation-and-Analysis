@@ -99,6 +99,7 @@ executable names and module load lines in `config/cluster.local.conf`
 | **POLYRATE** | 06 | Free to academics on request from the [Truhlar group](https://comp.chem.umn.edu/polyrate/) | the `.fu6` output table reader. **Untested**: no `.fu6` file was available |
 | **Schrodinger Glide** | 13 | Commercial, [Schrodinger](https://www.schrodinger.com) | best-pose extraction from multi-pose SDF, and its score feeds consensus ranking |
 | **MOE** | 13 | Commercial, [Chemical Computing Group](https://www.chemcomp.com) | same as Glide |
+| **Rosetta** | 15 | Free for non-commercial users (academic, non-profit, government); release binaries or source from `downloads.rosettacommons.org`, development version on GitHub ([Rosetta download](https://rosettacommons.org/download/)) | comparative modelling, symmetric and local docking, constrained relax. Set `ROSETTA_BIN`, `ROSETTA_SUFFIX`, and `ROSETTA_MPI_SUFFIX` for a parallel build |
 | **HADDOCK** | 13 | Free for academic use; the [web server and local version](https://www.bonvinlab.org/software/) are registered through the Bonvin lab | `haddock-air.sh` writes the ambiguous interaction restraint `.tbl` file |
 
 Honest statement of what is tested: the free programs in section 1 were run.
@@ -211,4 +212,5 @@ module.
 | metadynamics and binding free energy (12) | `plumed` + an MD engine | see [section 4](#4-programs-built-from-source) |
 | docking and consensus ranking (13) | `vina meeko rdkit` | Glide or MOE only for their own scores |
 | statistics and trajectory PCA (14) | `r-base r-bio3d r-factominer` | |
+| protein structure modelling (15) | nothing from conda | Rosetta, section 3; fragments from the Robetta server |
 | Gaussian, ORCA, GAMESS workflows (01, 02, 03) | nothing from conda | the licensed program, section 3 |

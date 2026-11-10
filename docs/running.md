@@ -18,6 +18,7 @@ Every command below is one you type. Nothing here is pseudocode.
 * [F. Accelerated MD and reweighting](#f-accelerated-md-and-reweighting)
 * [G. The same system in GROMACS](#g-the-same-system-in-gromacs)
 * [H. QM/MM molecular dynamics with CP2K](#h-qmmm-molecular-dynamics-with-cp2k)
+* [I. Building a structure with Rosetta](#i-building-a-structure-with-rosetta)
 * [Jobs, monitoring and restarts](#jobs-monitoring-and-restarts)
 
 ## The pattern every module follows
@@ -416,6 +417,165 @@ here, both fixed and explained in `10-cp2k/README.md`: force field atom types
 are not element symbols, so CP2K needs explicit `&KIND` sections with
 `ELEMENT`, and Amber now writes NetCDF restarts, which need converting to PDB
 with `cpptraj` before CP2K can read the coordinates.
+
+## I. Building a structure with Rosetta
+
+Everything above starts from a structure. This is what to do when there is not
+one: build a comparative model from partial templates, assemble it, and refine
+it against whatever measurements you have. It is the longest workflow here in
+wall time, days rather than hours, and the one where checking between stages
+matters most, because a bad model runs through MD perfectly and tells you
+nothing.
+
+### Before you start: four inputs from elsewhere
+
+| input | source |
+|---|---|
+| `TARGET_3.frags`, `TARGET_9.frags` | Robetta fragment server |
+| `TARGET.octopus` | TOPCONS or OCTOPUS, membrane proteins only |
+| template alignment | Clustal Omega or another multiple aligner |
+| template PDB files | the PDB, after searching for homologues |
+
+Everything must be upper case. Rosetta reads lower case as a deletion marker,
+so a mixed-case sequence silently gives a truncated model.
+
+### Stage 1 and 2: alignments and threading
+
+```bash
+15-rosetta-modelling/prepare/rosetta-cm-setup.sh -t e2 -a e2_templates.aln \
+    -n E2_target -O e2.octopus
+
+15-rosetta-modelling/prepare/rosetta-cm-thread.sh -t e2 -n E2_target \
+    6urh:C 2kzq:A 4mwf:C
+```
+
+**Read a Grishin file before going on.** It is five lines: a header naming the
+pair, a score line, then the target and template sequences with their gaps. If
+a template picked up the wrong sequence, or the gaps are not where the aligner
+put them, it is visible here and invisible everywhere afterwards.
+
+Each template must be one chain numbered from 1. Rosetta does not check this
+and will thread badly rather than fail. `-c` runs Rosetta's `clean_pdb.py` when
+`ROSETTA_TOOLS` is set; otherwise trim the templates yourself.
+
+### Stage 3: recombination
+
+```bash
+15-rosetta-modelling/run/rosetta-cm-hybridize.sh -t e2 -n 10000 -M -q
+bin/qdm-submit 3_hybridize
+```
+
+`-M` switches to the membrane weight sets and requires the `.span` file. Use it
+for any transmembrane protein: with the soluble weights the radius of gyration
+term compacts the helices into a globule, and the result looks like a
+reasonable soluble protein and is wrong.
+
+`-n` is a real decision. RosettaCM explores by recombining templates, so a few
+hundred models rarely finds the best arrangement of several. The published runs
+behind this module used 10000 to 15000. The default of 1000 is there so a first
+run finishes and can be looked at.
+
+If this stage produces nothing, the run script says so instead of leaving you
+with `mv: cannot stat 'S_*.pdb'`. The three usual causes are memory, a missing
+fragment file, and a template not numbered from 1.
+
+### Stage 4: relax and rank
+
+```bash
+15-rosetta-modelling/run/rosetta-relax.sh -t e2 -s 3_hybridize/output_structures \
+    -d e2.disulfide -M -n 5 -q
+bin/qdm-submit 4_relax
+```
+
+`-d` takes a file of disulfide pairs, two residue numbers per line. Without it
+Rosetta assigns disulfides from geometry, so a model where two cysteines
+drifted apart loses the bond and relaxes into a different fold.
+
+**Then look at the distribution, not just the best model:**
+
+```bash
+15-rosetta-modelling/extract/rosetta-scores.sh -o scores -k total_score 4_relax
+15-rosetta-modelling/plot/plot-score-distribution.sh -i scores/scores.csv
+```
+
+A single narrow peak in the histogram means the sampling converged. A broad or
+two-peaked distribution means it did not, and the lowest-scoring model is one
+sample from a wide distribution rather than an answer. If you have a reference
+structure, run with `-in:file:native` and the funnel plot tells you whether the
+score function can separate near-native from decoy at all. Without a funnel,
+the best score is not evidence.
+
+### Assembly
+
+For a symmetric homo-oligomer, check the symmetry definition first, because it
+costs seconds:
+
+```bash
+15-rosetta-modelling/run/rosetta-symm-dock.sh -p e2_best.pdb -N 3 -r 40 -S
+15-rosetta-modelling/run/rosetta-symm-dock.sh -p e2_best.pdb -N 3 -r 40 -n 100 -q
+```
+
+The subunit must be a single chain. Split it first with
+`prepare/rosetta-chains.sh` if it is not.
+
+For a hetero-assembly, treat the interfaces in turn:
+
+```bash
+15-rosetta-modelling/run/rosetta-local-dock.sh -p e1_trimer.pdb \
+    -i AB_C -i AC_B -n 100 -q
+```
+
+Each interface starts from the best pose of the previous one, so the order
+matters and the result is not symmetric in the interfaces. These stages rank on
+`I_sc`, the interface energy, not on total score: a pose can score better
+overall while making a worse interface, which is the opposite of what a docking
+run is being asked.
+
+### Restraints
+
+This is the step that turns a plausible assembly into one consistent with your
+measurements. Find the atoms in the structure you are about to relax:
+
+```bash
+grep ' LYS ' complex.pdb | awk '$6 == 179 && $3 == "NZ"'
+grep ' ASP ' complex.pdb | awk '$6 == 537 && $3 == "CG"'
+```
+
+Write them as restraints, with the chain letter, because pose numbering runs
+continuously across chains and residue 163 of chain B is not residue 163 in
+pose numbering:
+
+```text
+# RES:ATOM   RES:ATOM   lower  upper
+179A:NZ      537B:CG    2.5    4.0     # salt bridge
+176A:ND2     537B:CG    2.6    3.4     # interhelical hydrogen bond
+163A:H       167B:H     1.5    6.5     # amide proton contact
+```
+
+```bash
+15-rosetta-modelling/run/rosetta-constrained-relax.sh -p e1e2_trimer.pdb \
+    -c contacts.cst -n 1000 -W 4 -q
+```
+
+The script checks every atom named in the file is present and refuses to start
+otherwise. That check exists because Rosetta drops a restraint naming a missing
+atom without stopping: the run completes, the scores look normal, and nothing
+was enforced. It bites most often with amide hydrogen restraints, since a
+structure straight from a crystal has no hydrogens at all.
+
+**Afterwards, read the restraint term and not only the total.** The run script
+prints `atom_pair_constraint` per model. A structure can score well overall
+while leaving the restraints unsatisfied, and a weight strong enough to force a
+contact the fold cannot accommodate will distort everything else to get there.
+
+### Then out of Rosetta
+
+The original work continued through the GLYCAM glycoprotein builder for
+N-linked glycans and CHARMM-GUI for the lipid bilayer, both web services, and
+then into walkthrough C or G for the molecular dynamics. Two practical notes
+recorded from that work: avoid `-` in file names uploaded to CHARMM-GUI, and
+after glycosylation the ASN residues bonded to glycan have to be renamed to
+NLN before `tleap` will build the bonds.
 
 ## Jobs, monitoring and restarts
 

@@ -19,7 +19,7 @@ Links were checked in November 2026.
 | [funnel metadynamics tutorial files](#funnel-metadynamics-tutorial-files) | module 12 | optional, reference material |
 | [DSSP](#dssp) | nothing | not a dependency; explained below |
 | [the R tarballs](#the-r-tarballs) | module 14 | superseded by CRAN and conda |
-| [Rosetta](#rosetta) | no script in this repository | see the note |
+| [Rosetta](#rosetta) | module 15 | `clean_pdb.py` and `octopus2span.pl` needed for some steps |
 
 ## MGLTools and AutoDockTools
 
@@ -234,13 +234,11 @@ and FactoMineR from [factominer.free.fr](http://factominer.free.fr).
 
 ## Rosetta
 
-**Current state, stated plainly.** Rosetta demo files were in my original
-material, and an earlier version of this repository's top-level README listed
-them among the excluded third-party code. But **no script in this repository
-uses Rosetta**, there is no Rosetta module, and nothing here documents what
-that work did. The exclusion note was the only trace of it, which means the
-repository under-represents that part of the work rather than merely declining
-to redistribute someone else's files.
+**Rosetta is now module 15.** The comparative modelling, docking and
+constrained relaxation scripts are in
+[`../15-rosetta-modelling/`](../15-rosetta-modelling/), with the corrections
+made to them listed in that module's README. An earlier version of this
+document recorded the absence of this work as an open gap; that gap is closed.
 
 **Where Rosetta comes from.** RosettaCommons states that "for non-commercial
 users (academic, non-profits, government) Rosetta is available for free"
@@ -248,13 +246,53 @@ users (academic, non-profits, government) Rosetta is available for free"
 offered: release versions as precompiled binaries or source from
 `downloads.rosettacommons.org`, and the development version built from source
 through GitHub. Commercial licences go through the University of Washington
-CoMotion office.
+CoMotion office. Set `ROSETTA_BIN` and `ROSETTA_SUFFIX` in
+`config/cluster.local.conf`; the binaries carry a build suffix such as
+`relax.default.linuxgccrelease`, which differs between installations.
 
-**What is missing.** Adding a Rosetta module needs the original scripts, since
-the protocol matters: a relax run, a `docking_protocol` run, a `ddg_monomer` or
-`cartesian_ddg` scan, a design run and a `FlexPepDock` run all have different
-inputs, flags files and output parsing, and guessing which one I used would be
-making something up. The scripts have been requested.
+### Two Rosetta scripts that are not redistributed here
 
-Until they are added, this section is the honest statement of the gap rather
-than a claim that the gap does not exist.
+Both ship with Rosetta under `main/tools/` and are other people's work.
+
+**`clean_pdb.py`**, by Phil Bradley, Rhiju Das, Michael Tyka, TJ Brunette and
+James Thompson of the Baker Lab, with edits by Steven Combs, Sam Deluca and
+Jordan Willis of the Meiler Lab. It extracts one chain from a PDB, strips what
+Rosetta cannot read and renumbers from 1. It lives in
+`main/tools/protein_tools/scripts/` and needs Python 2.
+
+`rosetta-cm-thread.sh` calls it with `-c` when `ROSETTA_TOOLS` is set, and
+otherwise uses the template PDB files as given, which is what you want if you
+have already trimmed them in a viewer. Rosetta needs each template as a single
+chain numbered continuously from 1, and it will not tell you when that is
+untrue; it will thread badly instead.
+
+**`octopus2span.pl`**, by Bjorn Wallner and modified by Vladimir
+Yarov-Yarovoy. It converts a predicted transmembrane topology from the OCTOPUS
+or SPOCTOPUS server into the `.span` format the Rosetta membrane score terms
+read. It lives in Rosetta's membrane tools directory.
+
+`rosetta-cm-setup.sh` calls it when given `-O` and `ROSETTA_TOOLS` is set. Only
+membrane proteins need it. Without a `.span` file the membrane weight sets
+cannot be used, and modelling a transmembrane protein with the soluble weights
+compacts the helices into a globule, because the radius of gyration term is
+doing the wrong job; see
+[`../15-rosetta-modelling/wts/README.md`](../15-rosetta-modelling/wts/README.md).
+
+### Weight files that are included
+
+The six score function weight files in
+[`../15-rosetta-modelling/wts/`](../15-rosetta-modelling/wts/) are included
+rather than cited, because a protocol is not reproducible without the score
+function it used, and they are term names and numbers rather than program code.
+Their provenance, the published soluble RosettaCM weights plus the membrane
+adaptation, is set out in that directory's README.
+
+### Web services the module depends on
+
+Three inputs come from servers and cannot be scripted here: fragment libraries
+from the Robetta fragment server, transmembrane topology from TOPCONS or
+OCTOPUS, and the template alignment from a multiple aligner such as Clustal
+Omega. The glycosylation and membrane embedding that followed in the original
+work used the GLYCAM glycoprotein builder and CHARMM-GUI, also web services.
+[`running.md`](running.md#i-building-a-structure-with-rosetta) records where
+each sits in the sequence.
